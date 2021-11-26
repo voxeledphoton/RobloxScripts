@@ -1,0 +1,252 @@
+local RunService = game:GetService("RunService")
+local RS = game:GetService("ReplicatedStorage")
+local shop = RS:WaitForChild("Shop")
+local hammers = shop:WaitForChild("Hammers")
+local UpdatePlayerShop = RS:WaitForChild("UpdatePlayerShop")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+
+-- clone crates
+local Crates = RS:WaitForChild("Crates")
+local dailyCrate = Crates:WaitForChild("DailyCrate"):Clone()
+local crate1000 = Crates:WaitForChild("1000Crate"):Clone()
+local crate5000 = Crates:WaitForChild("5000Crate"):Clone()
+local crate10000 = Crates:WaitForChild("10000Crate"):Clone()
+dailyCrate.Parent = workspace
+crate1000.Parent = workspace
+crate5000.Parent = workspace
+crate10000.Parent = workspace
+
+local TS = game:GetService("TweenService")
+local DB = game:GetService("Debris")
+local ClaimDailyLoot = RS:WaitForChild("ClaimDailyLoot")
+local ClaimCrate = RS:WaitForChild("ClaimCrate")
+
+local hinge = dailyCrate.Hinge
+local closedCFrame = hinge.CFrame
+local openCFrame = closedCFrame * CFrame.Angles(90,0,0)
+local openGoal = {}
+openGoal.CFrame = openCFrame
+local closeGoal = {}
+closeGoal.CFrame = closedCFrame
+
+local hinge1000 = crate1000.Hinge
+local closedCFrame1000 = hinge1000.CFrame
+local openCFrame1000 = closedCFrame1000 * CFrame.Angles(90,0,0)
+local openGoal1000 = {}
+openGoal1000.CFrame = openCFrame1000
+local closeGoal1000 = {}
+closeGoal1000.CFrame = closedCFrame1000
+
+local hinge5000 = crate5000.Hinge
+local closedCFrame5000 = hinge5000.CFrame
+local openCFrame5000 = closedCFrame5000 * CFrame.Angles(90,0,0)
+local openGoal5000 = {}
+openGoal5000.CFrame = openCFrame5000
+local closeGoal5000 = {}
+closeGoal5000.CFrame = closedCFrame5000
+
+local hinge10000 = crate10000.Hinge
+local closedCFrame10000 = hinge10000.CFrame
+local openCFrame10000 = closedCFrame10000 * CFrame.Angles(90,0,0)
+local openGoal10000 = {}
+openGoal10000.CFrame = openCFrame10000
+local closeGoal10000 = {}
+closeGoal10000.CFrame = closedCFrame10000
+
+
+
+local openInfo = TweenInfo.new(
+	1,
+	Enum.EasingStyle.Bounce,
+	Enum.EasingDirection.Out,
+	0,
+	false,
+	0
+)
+local openTween = TS:Create(hinge,openInfo,openGoal)
+local closeTween = TS:Create(hinge,openInfo,closeGoal)
+
+local openTween1000 = TS:Create(hinge1000,openInfo,openGoal1000)
+local closeTween1000 = TS:Create(hinge1000,openInfo,closeGoal1000)
+
+local openTween5000 = TS:Create(hinge5000,openInfo,openGoal5000)
+local closeTween5000 = TS:Create(hinge5000,openInfo,closeGoal5000)
+
+local openTween10000 = TS:Create(hinge10000,openInfo,openGoal10000)
+local closeTween10000 = TS:Create(hinge10000,openInfo,closeGoal10000)
+
+dailyCrate.ClickDetector.MouseClick:Connect(function()
+	-- make sure enough time has gone past since last claim
+	local lootTime = nil
+	local claimedLoot = nil
+	claimedLoot, lootTime = ClaimDailyLoot:InvokeServer()
+	if claimedLoot then
+		-- set crate loot time
+		dailyCrate.BillboardGui.TimeLeft.ClaimTimeLeft.Value = lootTime
+		print("Playing animation")
+		openTween:Play()
+		dailyCrate.CollectCrate:Play()
+		dailyCrate.CrateLock:Play()
+		-- create particles and add them to debris
+		for i=1,10 do
+			local chunkP = RS:WaitForChild("Crates"):WaitForChild("ChunkParticle"):Clone()
+			chunkP.Velocity = Vector3.new(math.random(10)-5,40,math.random(10)-5)
+			chunkP.Parent = workspace
+			DB:AddItem(chunkP,4)
+		end
+		task.wait(2)
+		openTween:Cancel()
+		closeTween:Play()
+		task.wait(1)
+		dailyCrate.CrateLock:Play()
+		task.wait(1)
+		closeTween:Cancel()
+	end
+end)
+
+local function OpenCrate(crateObj,TcrateOpen,TcrateClose,amount)
+	-- make sure enough time has gone past since last claim
+	local claimedLoot = nil
+	claimedLoot = ClaimCrate:InvokeServer(amount)
+	if claimedLoot then
+		print("Playing animation")
+		TcrateOpen:Play()
+		crateObj.CollectCrate:Play()
+		crateObj.CrateLock:Play()
+		-- create particles and add them to debris
+		for i=1,10 do
+			local chunkP = RS:WaitForChild("Crates"):WaitForChild("ChunkParticle"):Clone()
+			chunkP.Velocity = Vector3.new(math.random(10)-5,40,math.random(10)-5)
+			chunkP.Parent = workspace
+			chunkP.CFrame = crateObj.PrimaryPart.CFrame * CFrame.new(0,2,0)
+			chunkP.Color = Color3.fromHSV(0.0836667, 1, 1)
+			chunkP.Trail.Color = ColorSequence.new(chunkP.Color)
+			DB:AddItem(chunkP,4)
+		end
+		task.wait(2)
+		TcrateOpen:Cancel()
+		TcrateClose:Play()
+		task.wait(1)
+		crateObj.CrateLock:Play()
+		task.wait(1)
+		TcrateClose:Cancel()
+	end
+end
+
+crate1000.ClickDetector.MouseClick:Connect(function()
+	OpenCrate(crate1000,openTween1000,closeTween1000,1000)
+end)
+crate5000.ClickDetector.MouseClick:Connect(function()
+	OpenCrate(crate5000,openTween5000,closeTween5000,5000)
+end)
+crate10000.ClickDetector.MouseClick:Connect(function()
+	OpenCrate(crate10000,openTween10000,closeTween10000,10000)
+end)
+
+
+
+
+-- SPAWN HAMMERS FROM RS
+local wHammers = Instance.new("Folder")
+wHammers.Name = "Hammers"
+wHammers.Parent = workspace
+
+local hamIncrement = 0
+for k,v in pairs(hammers:GetChildren()) do
+	if v:IsA("Model") then
+		local hammer = v:Clone()
+		hammer.Parent = wHammers
+		print("hammer has been cloned")
+		-- add a numbervalue to thte part to be used with rotation offset
+		hamIncrement = hamIncrement + 1
+		local hamIndex = Instance.new("NumberValue")
+		hamIndex.Name = "HamIndex"
+		hamIndex.Value = hamIncrement
+		hamIndex.Parent = hammer
+	end
+end
+local MainRotPart = shop:WaitForChild("MainRotPart"):Clone()
+MainRotPart.Parent = wHammers
+print("MainRotPart has been cloned")
+
+
+local c3 = workspace.RainbowColor
+
+-- ROTATE HAMMERS
+local RATE_PER_SECOND = .02
+local ORB_RATE_PER_SECOND = .05
+local radius = 20
+local incPos = 0
+local orbIncPos = 0
+local hamCount = table.getn(hammers:GetChildren())
+local snapAmount = (2*math.pi)/hamCount
+local ePos = Vector3.new(0,0,0)
+
+RunService.Heartbeat:Connect(function(step)
+	local increment = RATE_PER_SECOND * step
+	incPos = (incPos + increment)%(2*math.pi)
+	local orbIncrement = ORB_RATE_PER_SECOND * step
+	orbIncPos = (orbIncPos + orbIncrement)%(2*math.pi)
+	-- increment an angle
+	if MainRotPart then
+		ePos = MainRotPart.Position
+	end
+	
+	local rotAngles = CFrame.Angles(0,math.deg(incPos),0)
+	for k,v in pairs(wHammers:GetChildren()) do
+		for d,e in pairs(v:GetChildren()) do
+			if e.Name == "RotPart" then
+				local snapPlace = snapAmount*e.Parent.HamIndex.Value
+				--print(snapPlace)
+				ePos = Vector3.new(
+					math.cos(snapPlace+orbIncPos)*radius,
+					0,
+					math.sin(snapPlace+orbIncPos)*radius
+				) + MainRotPart.Position
+				e.CFrame = CFrame.new(ePos) * rotAngles
+			end
+			if v.Name == "Rainbow Soda" then
+				if e.Name == "HandleBall" or e.Name == "CanGraphics" or e.Name == "Tab" then
+					e.Color = c3.Value
+				end
+			end
+			if v.Name == "Jammer Rainbow" then
+				if e.Name == "Handle" then
+					e.Color = c3.Value
+				end
+			end
+		end
+	end
+end)
+
+
+--[[
+dataLoaded.HammerInventory,
+dataLoaded.HammerEquipped,
+dataLoaded.HammerEffects,
+dataLoaded.HammerEffectEquipped,
+dataLoaded.HammerAnimations,
+dataLoaded.HammerAnimationEquipped
+]]
+-- NEED TO DESTROY HAMMER PARTS AND REPLACE WITH HAMMEREQUIPPED
+UpdatePlayerShop.OnClientEvent:Connect(function(HammerInventory,HammerEquipped,HammerEffects,HammerEffectEquipped,HammerAnimations,HammerAnimationEquipped)
+	-- go through all hammers and change their gui status
+	print("UpdatePlayerShop was called")
+	for k,v in pairs(player.PlayerGui:WaitForChild("HammerGuis"):GetChildren()) do
+		-- set adornee to hammer
+		v.Adornee = wHammers[v.Name]
+		-- update hammer gui status
+		if HammerInventory[v.Name] then --table.find(HammerInventory,v.Name) then
+			if v.Name==HammerEquipped then
+				v.Status.Text = "EQUIPPED"
+			else
+				v.Status.Text = "PURCHASED"
+			end
+		else
+			v.Status.Text = "BUY"
+		end
+	end
+	
+end)
