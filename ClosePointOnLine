@@ -1,0 +1,44 @@
+local Q = workspace:WaitForChild("Q")
+local P = script.Parent
+local R = workspace:WaitForChild("R")
+local QR = P:WaitForChild("QR")
+local PR = P:WaitForChild("PR")
+
+local function nonNan(a,b,c)
+	if a==a then return a end
+	if b==b then return b end
+	if c==c then return c end
+	return nil
+end
+
+local function PointProjectionDistance(point,startPos,endPos)
+	local dirVect = endPos - startPos
+	local V = point - startPos
+	local projDV = (dirVect:Dot(V)/dirVect:Dot(dirVect))*dirVect
+	local VprojDV = V - projDV
+	local inter = point - VprojDV
+	local T = (inter-startPos)/dirVect
+	local thisT = nonNan(T.X,T.Y,T.Z) -- if nil then points are inside each other
+	if thisT>1 then inter = endPos end
+	if thisT<0 then inter = startPos end
+	return math.sqrt(VprojDV:Dot(VprojDV)), inter, thisT
+end
+
+local function CylinderLine(cylPart,startPos,endPos)
+	local QRrot = CFrame.new(startPos,endPos) * CFrame.Angles(0,math.pi*.5,0) - startPos
+	local QRvect = endPos - startPos
+	cylPart.CFrame = CFrame.new(startPos + QRvect*.5) * QRrot
+	cylPart.Size = Vector3.new(QRvect.Magnitude,cylPart.Size.Y,cylPart.Size.Z)
+end
+
+while task.wait() do
+	local ppd,theProj,theT = PointProjectionDistance(P.Position, Q.Position, R.Position)
+	
+	if theT<1 and theT>0 then
+		QR.Color = Color3.new(0.333333, 1, 0)
+	else
+		QR.Color = Color3.new(1, 0, 0)
+	end
+	CylinderLine(PR,P.Position,theProj)
+	CylinderLine(QR,Q.Position,R.Position)
+end
