@@ -1,0 +1,74 @@
+local module = {}
+
+function module.loadSound(sound)
+	-- Has the sound already loaded?
+	if not sound.IsLoaded then 
+		-- if not, wait until it has been
+		sound.Loaded:Wait()
+	end
+end
+
+
+function module.playSound(part,Rone,Rtwo,snd)
+	local bubpop
+	if snd then
+		bubpop = snd:Clone()
+	else
+		bubpop = script.DefaultSound:Clone()
+	end
+
+	bubpop.Parent = part
+	if not bubpop.IsLoaded then
+		bubpop.Loaded:wait()
+	end
+	bubpop.PlaybackSpeed = math.random(Rone, Rtwo)/100
+	bubpop.Volume = math.clamp(part.AssemblyLinearVelocity.Magnitude*.002,0,.2)
+	bubpop:Play()
+	--print("Played sound")
+	bubpop.Ended:Connect(function()
+		bubpop:Destroy()
+	end)
+end
+
+-- if no snd is passed the DefaultSound will be used
+-- for ignoreSeat insert the link to the seat that will get the occupant
+function module.soundBounce(part,Rone,Rtwo,snd,ignoreTbl,ignoreSeat)
+	module.loadSound(script:WaitForChild("DefaultSound"))
+	if snd then
+		module.loadSound(snd)
+	end
+	part.Touched:Connect(function(hit)
+		local willPlay = true
+		if ignoreTbl then
+			for k,v in pairs(ignoreTbl) do
+				if v:IsA("Model") then
+					for d,e in pairs(v:GetDescendants()) do
+						if e==hit then
+							willPlay = false
+						end
+					end
+				elseif v:IsA("BasePart") then
+					if v==hit then
+						willPlay = false
+					end
+				end
+			end
+		end
+		if ignoreSeat then
+			if ignoreSeat.Occupant then
+				for k,v in pairs(ignoreSeat.Occupant.Parent:GetDescendants()) do
+					if v==hit then
+						willPlay = false
+					end
+				end
+			end
+		end
+		
+		if willPlay then
+			module.playSound(part,Rone,Rtwo,snd)
+		end
+	end)
+end
+
+
+return module
