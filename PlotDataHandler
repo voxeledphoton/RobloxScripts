@@ -1,0 +1,90 @@
+local BuildingData = game:GetService("DataStoreService"):GetDataStore("Building_Data")
+
+local loadTable = {}
+local saveTable = {}
+local Plot
+
+local function loadPlot(plr)
+	Plot = nil
+	local data = BuildingData:GetAsync("ID_"..plr.UserId)
+	pcall(function()
+		loadTable = data
+
+		for i, modelplot in pairs(workspace.Plots:GetChildren()) do
+			if modelplot.Owner.Value == plr.UserId then
+				Plot = modelplot.Name
+			end
+		end
+		if Plot ~= nil and data then
+			for k, v in pairs(loadTable) do
+				local newPart = Instance.new("Part")
+				newPart.Name = loadTable[k].Name
+				newPart.Parent = workspace.Plots[Plot].ItemHolder
+				newPart.Position = Vector3.new(loadTable[k].PositionX, loadTable[k].PositionY, loadTable[k].PositionZ)
+				newPart.Size = Vector3.new(1,1,1)
+				newPart.Color = Color3.new(loadTable[k].ColorR, loadTable[k].ColorG, loadTable[k].ColorB)
+
+			end
+			print(plr.Name.." has data!")
+		else
+			saveTable = {}
+			print(plr.Name.." is new!")
+			print(Plot)
+		end
+	end)
+end
+
+local RS = game:GetService("ReplicatedStorage")
+local ClaimPlot = RS:WaitForChild("Remotes"):WaitForChild("ClaimPlot")
+
+ClaimPlot.OnServerEvent:Connect(function(plr,thePlot)
+	if thePlot.Owner.Value == 0 then
+		-- make sure eplayer doesn't already have plot
+		local hasPlot = false
+		for k,v in pairs(workspace.Plots:GetChildren()) do
+			if v.Owner.Value == plr.UserId then
+				hasPlot = true
+			end
+		end
+		if not hasPlot then
+			thePlot.Owner.Value = plr.UserId
+			loadPlot(plr)
+		end
+	else
+
+	end
+end)
+
+
+
+local function savePlot(player)
+	local playerPlot = nil
+	for k,v in pairs(workspace.Plots:GetChildren()) do
+		if v.Owner.Value == player.UserId then
+			playerPlot = v
+		end
+	end
+	if playerPlot then
+		for k,v in pairs(playerPlot.ItemHolder:GetChildren()) do
+			saveTable[k] = {}
+			saveTable[k].Name = v.Name
+			saveTable[k].PositionX, saveTable[k].PositionY, saveTable[k].PositionZ = v.Position.X, v.Position.Y, v.Position.Z
+			saveTable[k].ColorR, saveTable[k].ColorG, saveTable[k].ColorB = v.Color.R, v.Color.G, v.Color.B
+		end
+
+		BuildingData:SetAsync("ID_"..player.UserId, saveTable)
+		print("Data Saved!")
+	else
+		warn("player's plot was not saved!")
+	end
+	playerPlot.Owner.Value = 0
+end
+
+--workspace.plots[Plot].ItemsHolder:GetChildren()
+
+game.Players.PlayerRemoving:Connect(function(plr)
+	savePlot(plr)
+	--pcall(function()
+	--end)
+
+end)
