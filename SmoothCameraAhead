@@ -1,0 +1,39 @@
+local followSpeed = .05
+local offset = Vector3.new(0,2,0)
+
+
+local camera = workspace.CurrentCamera
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character
+if not character or not character.Parent then
+	character = player.CharacterAdded:wait()
+end
+
+local followPart = Instance.new("Part")
+followPart.Size = Vector3.new(1,1,1)
+followPart.Anchored = true
+followPart.Position = player.Character.HumanoidRootPart.Position
+followPart.CanCollide = false
+followPart.Transparency = 0
+followPart.Parent = player.Character.HumanoidRootPart
+
+
+camera.CameraSubject = followPart
+camera.CameraType = Enum.CameraType.Custom
+player.CameraMinZoomDistance = 4
+
+local playerLastPos = player.Character.HumanoidRootPart.Position
+
+local RunService = game:GetService("RunService")
+
+local function onUpdate()
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		local playerVelocity = player.Character.HumanoidRootPart.Position - playerLastPos
+		followPart.Position += (player.Character.HumanoidRootPart.Position + offset + playerVelocity*30 - followPart.Position) * followSpeed
+		playerLastPos = player.Character.HumanoidRootPart.Position
+	end
+end
+
+RunService:BindToRenderStep("Camera", Enum.RenderPriority.Camera.Value, onUpdate)
