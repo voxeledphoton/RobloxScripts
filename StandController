@@ -1,0 +1,64 @@
+-- script by @voxeledphoton (proximitynode)
+-- this script requires a script in ServerScriptService called StandSpawner
+
+-- put this script in ServerStorage and have it disabled (it gets cloned into your stand)
+
+
+local awayRadius = 5
+
+local lookAtFollow = script.Parent:WaitForChild("LookAtFollow")
+local StandIndex = script.Parent:WaitForChild("StandIndex")
+StandIndex.Value = #script.Parent.Parent:GetChildren()
+
+local Players = game:GetService("Players")
+
+local HRP = script.Parent:WaitForChild("HumanoidRootPart")
+local RRA = HRP:WaitForChild("RootRigAttachment")
+
+local followObject = script.Parent:WaitForChild("FollowObject")
+
+local AP = Instance.new("AlignPosition")
+AP.Mode = Enum.PositionAlignmentMode.OneAttachment
+AP.Attachment0 = RRA
+AP.Parent = HRP
+
+local AR = Instance.new("AlignOrientation")
+AR.Mode = Enum.OrientationAlignmentMode.OneAttachment
+AR.Attachment0 = RRA
+AR.CFrame = CFrame.new()
+AR.Parent = HRP
+
+local OwnerID = script.Parent:WaitForChild("OwnerID").Value
+
+-- make sure all descendants are can collide off
+-- would be better to use a collision group cause it just turns on again
+for k,v in pairs(script.Parent:GetDescendants()) do
+	if v:IsA("BasePart") then
+		v.CanCollide = false
+	end
+end
+
+local function GetOwnerHRP()
+	return Players:GetPlayerByUserId(OwnerID).Character.HumanoidRootPart
+end
+
+
+while script.Parent do
+	local hoverAngle = (math.pi*2/#script.Parent.Parent:GetChildren()) * StandIndex.Value
+	
+	local hoverPos = followObject.Value.Position + Vector3.new(
+		math.cos(hoverAngle) * awayRadius,
+		2,
+		math.sin(hoverAngle) * awayRadius
+	)
+	AP.Position = hoverPos
+	
+	if lookAtFollow.Value then
+		AR.CFrame = CFrame.new(HRP.Position, followObject.Value.Position)
+	else
+		AR.CFrame = followObject.Value.CFrame
+	end
+	
+	
+	task.wait(.2)
+end
