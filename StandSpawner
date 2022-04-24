@@ -1,0 +1,50 @@
+-- script by @voxeledphoton (proximitynode)
+-- this script requires another script in serverstorage called StandController
+
+-- example layout: https://i.gyazo.com/e853e7f977e5ceab40a100ca9e5a6678.png
+-- (your stand needs 4 value objects inside it)
+-- also add a Folder to workspace called "Stands"
+
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local SS = game:GetService("ServerStorage")
+local StandController = SS:WaitForChild("StandController")
+local Stands = RS:WaitForChild("Stands")
+local WSstands = workspace:WaitForChild("Stands")
+
+
+local function AddStand(plr,theName,objFollow)
+	local standName = "Dummy"
+	local newStand = Stands:WaitForChild(standName):Clone()
+	newStand.OwnerID.Value = plr.UserId
+	newStand.FollowObject.Value = objFollow
+	newStand.Parent = WSstands[plr.Name]
+	local sController = StandController:Clone()
+	sController.Parent = newStand
+	sController.Disabled = false
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	-- add folder for player's stands
+	local newFolder = Instance.new("Folder")
+	newFolder.Name = plr.Name
+	newFolder.Parent = WSstands
+	plr.CharacterAdded:Connect(function(char)
+		-- create stand when player spawns
+		-- can load in stand name from datastore and clone that in instead of Part
+		AddStand(plr,"Dummy",char:WaitForChild("HumanoidRootPart"))
+		AddStand(plr,"Dummy",char:WaitForChild("HumanoidRootPart"))
+		AddStand(plr,"Dummy",char:WaitForChild("HumanoidRootPart"))
+	end)
+	plr.CharacterRemoving:Connect(function(char)
+		-- destroy stands when player dies
+		for k,v in pairs(newFolder:GetChildren()) do
+			v:Destroy()
+		end
+	end)
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+	-- remove player's stands folder
+	WSstands[plr.Name]:Destroy()
+end)
