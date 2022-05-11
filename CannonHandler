@@ -1,0 +1,104 @@
+-- requires the CannonLocalHandler localscript
+
+local Debris = game:GetService("Debris")
+local RS = game:GetService("ReplicatedStorage")
+local CannonBall = RS:WaitForChild("ExtraParts"):WaitForChild("CannonBall")
+
+-- parts
+local seat = script.Parent
+local Barrel = seat.Parent
+local Cannon = Barrel.Parent
+-- constraints
+local pivotCon = Cannon:WaitForChild("Pivoter"):WaitForChild("CenterPart"):WaitForChild("CylindricalConstraint")
+local barrelCon = seat:WaitForChild("CylindricalConstraint")
+-- events
+local event = Barrel.Parent:WaitForChild("Events"):WaitForChild("Fire")
+local FDB = true
+
+-- scripts / sounds
+local cannonLocal = seat:WaitForChild("CannonLocalHandler")
+local ExplodeSound = seat:WaitForChild("Explosion")
+local CrankSound = seat:WaitForChild("Crank")
+
+-- Cannon Settings
+local targetRange = 40
+local power = 600
+local Accuracy = 100
+
+seat:GetPropertyChangedSignal("Throttle"):Connect(function()
+	while seat.Throttle~=0 do
+		local newAngle = barrelCon.TargetAngle - seat.ThrottleFloat * seat.MaxSpeed
+		if math.clamp(newAngle,barrelCon.LowerAngle,barrelCon.UpperAngle) == newAngle then
+			barrelCon.TargetAngle = newAngle
+			CrankSound:Play()
+		end
+		task.wait(.1)
+		CrankSound:Stop()
+	end
+end)
+seat:GetPropertyChangedSignal("Steer"):Connect(function()
+	while seat.Steer~=0 do
+		pivotCon.TargetAngle -= seat.SteerFloat * seat.TurnSpeed
+		CrankSound:Play()
+		task.wait(.1)
+		CrankSound:Stop()
+	end
+end)
+
+seat.ChildAdded:Connect(function(Child)
+	print(Child)    
+	if Child.Name == "SeatWeld" then
+		local occupant = seat.Occupant
+		if occupant ~= nil then
+			local plr = game.Players:GetPlayerFromCharacter(occupant.Parent)
+			local client = cannonLocal:Clone()
+			client.Parent = occupant.Parent
+			client.Disabled = false
+			print(plr)      
+		end     
+	end     
+end)
+seat.ChildRemoved:Connect(function(Child)
+	if Child.Name == "SeatWeld" then
+		local occupant = seat.Occupant
+		local theClientScript = occupant.Parent:FindFirstChild("CannonLocalHandler")
+		if theClientScript then 
+			theClientScript:Destroy()
+		end
+
+	end
+end)
+
+event.OnServerEvent:Connect(function(plr)
+	if FDB then
+		FDB = false
+		print("Firing...")
+		ExplodeSound:Play()
+		local spawnPos = seat.CFrame * Barrel.PrimaryPart:WaitForChild("SpawnPos").CFrame
+		-- cannon splode
+		local Exp = Instance.new("Explosion")
+		Exp.DestroyJointRadiusPercent = 0
+		Exp.Position = spawnPos.Position
+		Exp.BlastPressure = 0
+		Exp.BlastRadius = 10
+		Exp.Visible = true
+		Exp.Parent = workspace
+		-- make cannon ball
+		local newCannonBall = CannonBall:Clone() 
+		newCannonBall:SetPrimaryPartCFrame(spawnPos)
+		newCannonBall.PrimaryPart.Anchored = false
+		newCannonBall.Parent = workspace
+		newCannonBall.PrimaryPart.AssemblyLinearVelocity = Barrel.PrimaryPart.CFrame.LookVector * 200
+		newCannonBall.PrimaryPart:ApplyImpulse(Barrel.PrimaryPart.CFrame.LookVector * 200)
+		print("cannonball was cloned in..")
+		local theChar = plr.Character
+		if theChar then
+			local theHand = theChar:WaitForChild("RightHand",2)
+			if theHand then
+				newCannonBall.ThrownBy.Value = theHand
+			end
+		end
+		task.wait(2.9)
+		FDB = true
+	end
+end)
