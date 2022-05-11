@@ -1,0 +1,59 @@
+local Players = game:GetService("Players")
+local Debris = game:GetService("Debris")
+
+local cannonBall = script.Parent.Parent
+local thrownBy = cannonBall:WaitForChild("ThrownBy")
+
+Debris:AddItem(cannonBall,10)
+
+local madeSplode = false
+script.Parent.Touched:Connect(function(hit)
+	print(hit.Material)
+	print(hit.Name)
+	-- check if hit player and add a weld to hand
+	if not script.Parent.Anchored then
+		if thrownBy.Value==nil then
+		else
+			if not hit:FindFirstAncestor("Cannon") then
+				if hit.Material ~= Enum.Material.Water then
+					if not madeSplode then
+						print("Land")
+						local Exp = Instance.new("Explosion")
+						Exp.DestroyJointRadiusPercent = 0
+						Exp.Position = cannonBall.PrimaryPart.Position
+						Exp.BlastPressure = 2000
+						Exp.BlastRadius = 10
+						Exp.Visible = true
+						Exp.Parent = workspace
+						Debris:AddItem(cannonBall,.1)
+						madeSplode = true
+					end
+				elseif hit.Material == Enum.Material.Water then
+					print("Water")
+					Debris:AddItem(cannonBall,.1)                         
+				end    
+			end
+			local hitChar = hit.Parent
+			if not hitChar:FindFirstChild("Humanoid") then
+				hitChar = hit.Parent.Parent
+				if not hitChar:FindFirstChild("Humanoid") then
+					hitChar = nil
+				end
+			end
+			if hitChar then
+				local rHand = hitChar:FindFirstChild("RightHand")
+				--print("thrownBy before check: "..thrownBy.Value.Parent.Name)
+				--print("rHand that was hit: "..rHand.Parent.Name)
+				if thrownBy.Value ~= rHand then
+					if not thrownBy.Value:FindFirstChild("ballWeld") then
+						--print("thrownBy: "..thrownBy.Value.Parent.Name)
+						if hitChar then
+							--print("tried to damage hit player")
+							hitChar.Humanoid:TakeDamage(20)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
