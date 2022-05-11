@@ -1,0 +1,17 @@
+-- requires the CannonHandler script
+
+local plr = game.Players.LocalPlayer
+local mouse = plr:GetMouse()
+local Cannon = script:WaitForChild("Cannon").Value
+local event = Cannon:WaitForChild("Events")
+local Fire = event:WaitForChild("Fire")
+local FDB = true
+
+mouse.Button1Down:Connect(function(click)
+	if FDB then
+		FDB = false
+		Fire:FireServer()
+		task.wait(3)
+		FDB = true
+	end
+end)
