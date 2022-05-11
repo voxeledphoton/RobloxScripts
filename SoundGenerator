@@ -1,5 +1,7 @@
 local module = {}
 
+local Debris = game:GetService("Debris")
+
 function module.loadSound(sound)
 	-- Has the sound already loaded?
 	if not sound.IsLoaded then 
@@ -9,7 +11,7 @@ function module.loadSound(sound)
 end
 
 
-function module.playSound(part,Rone,Rtwo,snd)
+function module.playSound(part,Rone,Rtwo,snd,vol)
 	local bubpop
 	if snd then
 		bubpop = snd:Clone()
@@ -22,12 +24,35 @@ function module.playSound(part,Rone,Rtwo,snd)
 		bubpop.Loaded:wait()
 	end
 	bubpop.PlaybackSpeed = math.random(Rone, Rtwo)/100
-	bubpop.Volume = math.clamp(part.AssemblyLinearVelocity.Magnitude*.002,0,.2)
+	if vol then
+		bubpop.Volume = vol
+	else
+		bubpop.Volume = math.clamp(part.AssemblyLinearVelocity.Magnitude*.002,0,.2)
+	end
 	bubpop:Play()
 	--print("Played sound")
 	bubpop.Ended:Connect(function()
 		bubpop:Destroy()
 	end)
+end
+
+function module.playSoundPos(pos,Rone,Rtwo,snd,vol)
+	module.loadSound(script:WaitForChild("DefaultSound"))
+	if snd then
+		module.loadSound(snd)
+	end
+	local soundPart = Instance.new("Part")
+	soundPart.Name = "SoundPart"
+	soundPart.Anchored = true
+	soundPart.Transparency = 1
+	soundPart.CanCollide = false
+	soundPart.CanQuery = false
+	soundPart.CanTouch = false
+	soundPart.Position = pos
+	soundPart.Parent = workspace
+	print("made sound part")
+	module.playSound(soundPart,Rone,Rtwo,snd,vol)
+	Debris:AddItem(soundPart,snd.TimeLength)
 end
 
 -- if no snd is passed the DefaultSound will be used
@@ -63,9 +88,9 @@ function module.soundBounce(part,Rone,Rtwo,snd,ignoreTbl,ignoreSeat)
 				end
 			end
 		end
-		
+
 		if willPlay then
-			module.playSound(part,Rone,Rtwo,snd)
+			module.playSound(part,Rone,Rtwo,snd,nil)
 		end
 	end)
 end
