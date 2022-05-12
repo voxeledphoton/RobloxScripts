@@ -4,34 +4,45 @@ local Debris = game:GetService("Debris")
 local cannonBall = script.Parent.Parent
 local thrownBy = cannonBall:WaitForChild("ThrownBy")
 
+local SSS = game:GetService("ServerScriptService")
+local sGen = require(SSS:WaitForChild("SoundGenerator"))
+
+local WaterSound = script.Parent:WaitForChild("WaterSplash")
+
 Debris:AddItem(cannonBall,10)
 
 local madeSplode = false
 script.Parent.Touched:Connect(function(hit)
-	print(hit.Material)
-	print(hit.Name)
 	-- check if hit player and add a weld to hand
 	if not script.Parent.Anchored then
 		if thrownBy.Value==nil then
 		else
 			if not hit:FindFirstAncestor("Cannon") then
-				if hit.Material ~= Enum.Material.Water then
-					if not madeSplode then
+				local rayParams = RaycastParams.new()
+				rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+				rayParams.FilterDescendantsInstances = { cannonBall }
+				rayParams.IgnoreWater = false
+				local rayResult = workspace:Raycast(script.Parent.Position,Vector3.new(0,-2,0),rayParams)
+				if rayResult then
+					print(rayResult.Material)
+					if rayResult.Material ~= Enum.Material.Water then
 						print("Land")
-						local Exp = Instance.new("Explosion")
-						Exp.DestroyJointRadiusPercent = 0
-						Exp.Position = cannonBall.PrimaryPart.Position
-						Exp.BlastPressure = 2000
-						Exp.BlastRadius = 10
-						Exp.Visible = true
-						Exp.Parent = workspace
-						Debris:AddItem(cannonBall,.1)
-						madeSplode = true
+					else
+						print("Water")
+						sGen.playSoundPos(cannonBall.PrimaryPart.Position,70,120,WaterSound,.8)
 					end
-				elseif hit.Material == Enum.Material.Water then
-					print("Water")
-					Debris:AddItem(cannonBall,.1)                         
-				end    
+				end
+				if not madeSplode then
+					local Exp = Instance.new("Explosion")
+					Exp.DestroyJointRadiusPercent = 0
+					Exp.Position = cannonBall.PrimaryPart.Position
+					Exp.BlastPressure = 2000
+					Exp.BlastRadius = 10
+					Exp.Visible = true
+					Exp.Parent = workspace
+					madeSplode = true
+				end
+				Debris:AddItem(cannonBall,.1)
 			end
 			local hitChar = hit.Parent
 			if not hitChar:FindFirstChild("Humanoid") then
