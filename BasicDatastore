@@ -4,28 +4,6 @@ local PData = DSS:GetDataStore("PlayerData")
 local http = game:GetService("HttpService")
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local BadgeService = game:GetService("BadgeService")
-
-local function awardBadge(player, badgeId)
-	-- Fetch badge information
-	local success, badgeInfo = pcall(function()
-		return BadgeService:GetBadgeInfoAsync(badgeId)
-	end)
-	if success then
-		-- Confirm that badge can be awarded
-		if badgeInfo.IsEnabled then
-			-- Award badge
-			local awarded, errorMessage = pcall(function()
-				BadgeService:AwardBadge(player.UserId, badgeId)
-			end)
-			if not awarded then
-				warn("Error while awarding badge:", errorMessage)
-			end
-		end
-	else
-		warn("Error while fetching badge info!")
-	end
-end
 
 Players.PlayerAdded:Connect(function(plr)
 	local dataLoaded = PData:GetAsync(plr.UserId)
@@ -33,38 +11,26 @@ Players.PlayerAdded:Connect(function(plr)
 		local data = {}
 		-- first time data entry
 		data.Name = plr.Name
-		data.MembershipType = plr.MembershipType
 		data.AccountAge = plr.AccountAge
 		data.FirstTimeJoined = os.time()
 		data.TimesJoined = 0
 		data.LastTimeJoined = os.time()
-		data.Version = 3 -- CHANGE THIS EVERYTIME YOU UPDATE THE DATA
-		-- new in version 2
-		data.EquippedHead = "None"
-		data.HeadsCollected = {"None"}
-		-- new in version 3
-		data.UnlockedBlocks = {"Part"}
 		data.Dabloons = 0
+		data.Version = 1 -- CHANGE THIS EVERYTIME YOU UPDATE THE DATA
+		-- new in version 2
 
 		dataLoaded = data
 		PData:SetAsync(plr.UserId, http:JSONEncode(data))
-		-- clear data table since it was added to datastore
-		--ClearTable(data)
 	else
 		-- data entry update
 		dataLoaded = http:JSONDecode(dataLoaded)
-
+		
+		--[[
 		if dataLoaded.Version == 1 then
 			-- add keys that version 1 didn't have and update version
-			dataLoaded.EquippedHead = "None"
-			dataLoaded.HeadsCollected = {"None"}
 			dataLoaded.Version = 2
 		end
-		if dataLoaded.Version == 2 then
-			dataLoaded.UnlockedBlocks = {"Part"}
-			dataLoaded.Dabloons = 0
-			dataLoaded.Version = 3
-		end
+		]]
 
 		-- update some keys values
 		dataLoaded.LastTimeJoined = os.time()
@@ -81,25 +47,6 @@ Players.PlayerAdded:Connect(function(plr)
 		return data
 	end)
 
-	-- give badge if admin is in server
-	---[[
-	local adminHere = false
-	for k,v in pairs(Players:GetPlayers()) do
-		if v.UserId == 1296424630 then
-			adminHere = true
-		end
-	end
-	if adminHere then
-		awardBadge(plr, 2126372371)
-	end
-	-- give badge to everyone if admin just joined
-	if plr.UserId == 1296424630 then
-		for k,v in pairs(Players:GetPlayers()) do
-			awardBadge(v, 2126372371)
-		end
-	end
-	--]]
-
 	-- add dabloons instance value to player
 	local dabloons = Instance.new("IntValue")
 	dabloons.Value = dataLoaded.Dabloons
@@ -108,6 +55,7 @@ Players.PlayerAdded:Connect(function(plr)
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
+	-- save unlocked blocks
 	local dataLoaded = PData:GetAsync(plr.UserId)
 	dataLoaded = http:JSONDecode(dataLoaded)
 	dataLoaded.Dabloons = plr:WaitForChild("Dabloons").Value
