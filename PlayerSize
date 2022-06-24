@@ -1,0 +1,80 @@
+local RS = game:GetService("ReplicatedStorage")
+local Remotes = RS:WaitForChild("Remotes")
+local ResizeChar = Remotes:WaitForChild("ResizeChar")
+
+local Players = game:GetService("Players")
+
+local oScaleValues = {}
+local smallScale = .2
+local oWalkSpeed = 24
+local oJumpPower = 50
+
+
+Players.PlayerAdded:Connect(function(plr)
+	local character = plr.Character
+	if not character or not character.Parent then
+		character = plr.CharacterAdded:wait()
+	end
+	local Humanoid = character:FindFirstChild("Humanoid")
+	oScaleValues[plr.UserId] = {
+		head = Humanoid:WaitForChild("HeadScale").Value;
+		bodyDepth = Humanoid:WaitForChild("BodyDepthScale").Value;
+		bodyWidth = Humanoid:WaitForChild("BodyWidthScale").Value;
+		bodyHeight = Humanoid:WaitForChild("BodyHeightScale").Value;
+	}
+end)
+Players.PlayerRemoving:Connect(function(plr)
+	table.remove(oScaleValues,plr.UserId)
+end)
+
+ResizeChar.OnServerEvent:Connect(function(plr,theBool)
+	local character = plr.Character
+	if not character or not character.Parent then
+		character = plr.CharacterAdded:wait()
+	end
+	local Humanoid = character:FindFirstChild("Humanoid")
+	if theBool then
+		if Humanoid then
+			Humanoid.HeadScale.Value = oScaleValues[plr.UserId].head * smallScale
+			Humanoid.BodyDepthScale.Value = oScaleValues[plr.UserId].bodyDepth * smallScale
+			Humanoid.BodyWidthScale.Value = oScaleValues[plr.UserId].bodyWidth * smallScale
+			Humanoid.BodyHeightScale.Value = oScaleValues[plr.UserId].bodyHeight * smallScale
+			Humanoid.WalkSpeed = oWalkSpeed * smallScale
+			Humanoid.JumpPower = oJumpPower * math.sqrt(smallScale)
+			local hrp = character:WaitForChild("HumanoidRootPart")
+			if not hrp:FindFirstChild("nonSlide") then
+				local newPart = Instance.new("Part")
+				newPart.Name = "nonSlide"
+				newPart.Size = Vector3.new(0.75, 0.75, 2)--0.625)
+				newPart.CFrame = hrp.CFrame
+				newPart.CanCollide = false
+				newPart.CanTouch = false
+				newPart.Anchored = false
+				newPart.CanQuery = false
+				newPart.Transparency = 1
+				newPart.Parent = hrp
+				
+				local newWeld = Instance.new("WeldConstraint")
+				newWeld.Part0 = newPart
+				newWeld.Part1 = hrp
+				newWeld.Parent = newPart
+			end
+		end
+	else
+		if Humanoid then
+			Humanoid.HeadScale.Value = oScaleValues[plr.UserId].head
+			Humanoid.BodyDepthScale.Value = oScaleValues[plr.UserId].bodyDepth
+			Humanoid.BodyWidthScale.Value = oScaleValues[plr.UserId].bodyWidth
+			Humanoid.BodyHeightScale.Value = oScaleValues[plr.UserId].bodyHeight
+			Humanoid.WalkSpeed = oWalkSpeed
+			Humanoid.JumpPower = oJumpPower
+			local hrp = character:WaitForChild("HumanoidRootPart",8)
+			if hrp then
+				local nonSlide = hrp:FindFirstChild("nonSlide")
+				if nonSlide then
+					nonSlide:Destroy()
+				end
+			end
+		end
+	end
+end)
