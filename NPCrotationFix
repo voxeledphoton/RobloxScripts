@@ -1,0 +1,22 @@
+--[[
+ this is a fix you'd run in console after adding a separate HumanoidRootPart for the npc
+ basically adds a motor6d on the first part you selected (the hrp)
+ make sure the front face of the hrp is going the way you want it to
+]]
+
+
+local Selection = game:GetService("Selection")
+
+local Part0 = Selection:Get()[1]
+local Part1 = Selection:Get()[2]
+
+
+local Motor6d = Instance.new("Motor6D")
+Motor6d.C0 = Part0.CFrame:Inverse() * Part1.CFrame
+
+Motor6d.Name = "Root"
+
+Motor6d.Part0 = Part0
+Motor6d.Part1 = Part1
+
+Motor6d.Parent = Part0
