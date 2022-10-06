@@ -24,6 +24,31 @@ function module.TweenModel(theModel, tweenInfo, propTable)
 	end
 end
 
+-- this function is from https://devforum.roblox.com/t/is-this-the-best-way-to-scale-a-model/166021/26
+function module.ScaleModelWithJoints(model, scale)
+	local origin = model.PrimaryPart.Position
+
+	for _, obj in ipairs(model:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			obj.Size = obj.Size*scale
+
+			local distance = (obj.Position - model:GetPrimaryPartCFrame().p)
+			local rotation = (obj.CFrame - obj.Position)
+			obj.CFrame = (CFrame.new(model:GetPrimaryPartCFrame().p + distance*scale) * rotation)
+		elseif obj:IsA("JointInstance") then
+			local c0NewPos = obj.C0.p*scale
+			local c0RotX, c0RotY, c0RotZ = obj.C0:ToEulerAnglesXYZ()
+			
+			local c1NewPos = obj.C1.p*scale
+			local c1RotX, c1RotY, c1RotZ = obj.C1:ToEulerAnglesXYZ()
+
+			obj.C0 = CFrame.new(c0NewPos)*CFrame.Angles(c0RotX, c0RotY, c0RotZ)
+			obj.C1 = CFrame.new(c1NewPos)*CFrame.Angles(c1RotX, c1RotY, c1RotZ)
+		end
+	end
+end
+
+
 return module
 
 
