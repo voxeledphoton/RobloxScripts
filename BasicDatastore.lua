@@ -5,7 +5,7 @@ local http = game:GetService("HttpService")
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-Players.PlayerAdded:Connect(function(plr)
+local function onPlayerAdded(plr)
 	local dataLoaded = PData:GetAsync(plr.UserId)
 	if not dataLoaded then
 		local data = {}
@@ -52,12 +52,21 @@ Players.PlayerAdded:Connect(function(plr)
 	dabloons.Value = dataLoaded.Dabloons
 	dabloons.Name = "Dabloons"
 	dabloons.Parent = plr
-end)
+end
 
-Players.PlayerRemoving:Connect(function(plr)
+Players.PlayerAdded:Connect(onPlayerAdded)
+for _,plr in ipairs(Players:GetPlayers()) do
+	onPlayerAdded(plr)
+end
+
+local function save(plr)
 	-- save unlocked blocks
 	local dataLoaded = PData:GetAsync(plr.UserId)
 	dataLoaded = http:JSONDecode(dataLoaded)
 	dataLoaded.Dabloons = plr:WaitForChild("Dabloons").Value
 	PData:SetAsync(plr.UserId, http:JSONEncode(dataLoaded))
+end
+
+Players.PlayerRemoving:Connect(function(plr)
+	save(plr)
 end)
