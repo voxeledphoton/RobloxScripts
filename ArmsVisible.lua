@@ -18,7 +18,7 @@ local visibleParts = {
 function antiTrans(part)
 	if part and part:IsA("BasePart") and table.find(visibleParts,part.Name) then
 		part.LocalTransparencyModifier = part.Transparency
-		part.Changed:connect(function (property)    
+		part.Changed:Connect(function (property)    
 			part.LocalTransparencyModifier = part.Transparency
 		end)
 	end
