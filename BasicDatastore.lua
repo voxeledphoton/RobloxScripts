@@ -5,6 +5,12 @@ local http = game:GetService("HttpService")
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
+-- WHEN YOU ADD A VALUE TO "data"
+--   UPDATE VERSION NUMBER
+--   ADD IT IN THE VERSION CHECK UPDATER
+--   Instance.new() AN ACTUAL OBJECT FOR IT
+--   ADD IT IN THE SAVE FUNCTION
+
 local function onPlayerAdded(plr)
 	local dataLoaded = nil
 	local success, updatedData = pcall(function()
@@ -30,21 +36,24 @@ local function onPlayerAdded(plr)
 			local success, updatedData = pcall(function()
 				dataLoaded = http:JSONDecode(dataLoaded)
 			end)
-			--[[
-			if dataLoaded.Version == 1 then
-				-- add keys that version 1 didn't have and update version
-				dataLoaded.Version = 2
-			end
-			]]
 
 			-- update some keys values
-			dataLoaded.LastTimeJoined = os.time()
-			dataLoaded.MembershipType = plr.MembershipType
-			dataLoaded.AccountAge = plr.AccountAge
-			dataLoaded.TimesJoined = dataLoaded.TimesJoined + 1
-			local success, updatedData = pcall(function()
-				PData:SetAsync(plr.UserId, http:JSONEncode(dataLoaded))
-			end)
+			if success then
+				--[[
+				-- VERSION CHECK UPDATER
+				if dataLoaded.Version == 1 then
+					-- add keys that version 1 didn't have and update version
+					dataLoaded.Version = 2
+				end
+				]]
+				dataLoaded.LastTimeJoined = os.time()
+				dataLoaded.MembershipType = plr.MembershipType
+				dataLoaded.AccountAge = plr.AccountAge
+				dataLoaded.TimesJoined = dataLoaded.TimesJoined + 1
+				local success, updatedData = pcall(function()
+					PData:SetAsync(plr.UserId, http:JSONEncode(dataLoaded))
+				end)
+			end
 		end
 		-- since keys hold 4mb this might fill after 400k players since each userId is approx 10 characters
 		local success, updatedData = pcall(function()
@@ -54,7 +63,7 @@ local function onPlayerAdded(plr)
 				return data
 			end)
 		end)
-
+		-- ADD OBJECT DATA THAT WILL EVENTUALLY BE SAVED HERE
 		-- add dabloons instance value to player
 		local dabloons = Instance.new("IntValue")
 		dabloons.Value = dataLoaded.Dabloons
@@ -76,6 +85,7 @@ local function save(plr)
 		dataLoaded = http:JSONDecode(dataLoaded)
 	end)
 	if success then
+		-- GRAB OBJECT DATA TO SAVE HERE
 		dataLoaded.Dabloons = plr:WaitForChild("Dabloons").Value
 		PData:SetAsync(plr.UserId, http:JSONEncode(dataLoaded))
 	end
