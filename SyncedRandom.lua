@@ -23,6 +23,7 @@ local function otherPlayer(plr)
 			return oplr
 		end
 	end
+	return nil
 end
 
 module.thisRandom = Random.new(1234)
@@ -37,7 +38,10 @@ if RunService:IsServer() then
 	Players.PlayerAdded:Connect(function(plr)
 		-- grab random from other player already in the game
 		latestPlayer = plr
-		reGrabRandom:FireClient(otherPlayer(plr))
+		local otherPlr = otherPlayer(plr)
+		if otherPlr then
+			reGrabRandom:FireClient(otherPlr)
+		end
 	end)
 	RandomUpdate.Changed:Connect(function()
 		if RandomUpdate.Value then
